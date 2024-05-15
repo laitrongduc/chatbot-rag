@@ -210,7 +210,7 @@ def main():
         # DOCUMENTS
         st.title("Upload your documents")
         if "doc_path" not in st.session_state:
-            st.session_state.doc_path = "data/"
+            st.session_state.doc_path = "/data/"
         # if not os.path.exists(st.session_state.doc_path):
         #     os.makedirs(st.session_state.doc_path)
         # when the user uploads a file, store it in the session state
