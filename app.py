@@ -211,8 +211,9 @@ def main():
         st.title("Upload your documents")
         if "doc_path" not in st.session_state:
             st.session_state.doc_path = "data/"
-        if not os.path.exists(st.session_state.doc_path):
-            os.makedirs(st.session_state.doc_path)
+        doc_path = st.session_state.doc_path
+        # if not os.path.exists(st.session_state.doc_path):
+        #     os.makedirs(st.session_state.doc_path)
         # when the user uploads a file, store it in the session state
         uploaded_files = st.file_uploader(
             "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
@@ -223,7 +224,7 @@ def main():
                 file_type = file.name.split(".")[-1]
                 # st.success(f"Uploaded {file.name} ({file_type})")
                 all_files.append(f"{file.name}")
-                file_path = st.session_state.doc_path + file.name
+                file_path = os.path.join(doc_path, file.name)
                 # delete the old file if it exists
                 if os.path.exists(file_path):
                     os.remove(file_path)
@@ -233,19 +234,18 @@ def main():
             st.success(f"Uploaded {len(all_files)} files: {all_files}")
 
         # EMBEDDING
+        if "index_path" not in st.session_state:
+            st.session_state.index_path = "index/"
+        index_path = st.session_state.index_path
+        # if not os.path.exists(index_path):
+        #     os.makedirs(index_path)
         st.title("Embedding")
-        doc_path = st.session_state.doc_path
         chunk_size = st.number_input(
             "Chunk size", value=128, min_value=1, max_value=1000
         )
         chunk_step = st.number_input(
             "Chunk step", value=128, min_value=1, max_value=1000
         )
-        if "index_path" not in st.session_state:
-            st.session_state.index_path = "index/"
-        index_path = st.session_state.index_path
-        if not os.path.exists(index_path):
-            os.makedirs(index_path)
         if st.button("Embed"):
             indexer(doc_path, chunk_size, chunk_step, index_path)
             st.success(f"Embedding completed. Saved to {index_path}")
