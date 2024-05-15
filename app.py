@@ -211,8 +211,8 @@ def main():
         st.title("Upload your documents")
         if "doc_path" not in st.session_state:
             st.session_state.doc_path = "/data/"
-        # if not os.path.exists(st.session_state.doc_path):
-        #     os.makedirs(st.session_state.doc_path)
+        if not os.path.exists(st.session_state.doc_path):
+            os.makedirs(st.session_state.doc_path)
         # when the user uploads a file, store it in the session state
         uploaded_files = st.file_uploader(
             "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
@@ -241,8 +241,8 @@ def main():
         )
         if "index_path" not in st.session_state:
             st.session_state.index_path = "index"
-            # if not os.path.exists(index_path):
-            #     os.makedirs(index_path)
+        if not os.path.exists(st.session_state.index_pathex_path):
+            os.makedirs(st.session_state.index_path)
         if st.button("Embed"):
             indexer(
                 st.session_state.doc_path,
