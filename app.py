@@ -210,7 +210,7 @@ def main():
         # DOCUMENTS
         st.title("Upload your documents")
         if "doc_path" not in st.session_state:
-            st.session_state.doc_path = "/data/"
+            st.session_state.doc_path = "data/"
         if not os.path.exists(st.session_state.doc_path):
             os.makedirs(st.session_state.doc_path)
         # when the user uploads a file, store it in the session state
@@ -240,7 +240,7 @@ def main():
             "Chunk step", value=128, min_value=1, max_value=1000
         )
         if "index_path" not in st.session_state:
-            st.session_state.index_path = "index"
+            st.session_state.index_path = "index/"
         if not os.path.exists(st.session_state.index_pathex_path):
             os.makedirs(st.session_state.index_path)
         if st.button("Embed"):
