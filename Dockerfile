@@ -21,7 +21,7 @@ HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
 
-RUN mkdir /data
-RUN chmod 777 /data
-RUN mkdir /index
-RUN chmod 777 /index
+RUN mkdir code/data
+RUN chmod 777 code/data
+RUN mkdir code/index
+RUN chmod 777 code/index

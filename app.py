@@ -231,21 +231,26 @@ def main():
                     f.write(file.getvalue())
             st.success(f"Uploaded {len(all_files)} files: {all_files}")
 
-            # EMBEDDING
-            st.title("Embedding")
-            chunk_size = st.number_input(
-                "Chunk size", value=128, min_value=1, max_value=1000
-            )
-            chunk_step = st.number_input(
-                "Chunk step", value=128, min_value=1, max_value=1000
-            )
-            if "index_path" not in st.session_state:
-                st.session_state.index_path = "index"
+        # EMBEDDING
+        st.title("Embedding")
+        chunk_size = st.number_input(
+            "Chunk size", value=128, min_value=1, max_value=1000
+        )
+        chunk_step = st.number_input(
+            "Chunk step", value=128, min_value=1, max_value=1000
+        )
+        if "index_path" not in st.session_state:
+            st.session_state.index_path = "index"
             # if not os.path.exists(index_path):
             #     os.makedirs(index_path)
-            if st.button("Embed"):
-                indexer(st.session_state.doc_path, chunk_size, chunk_step, st.session_state.index_path)
-                st.success(f"Embedding completed. Saved to {st.session_state.index_path}")
+        if st.button("Embed"):
+            indexer(
+                st.session_state.doc_path,
+                chunk_size,
+                chunk_step,
+                st.session_state.index_path,
+            )
+            st.success(f"Embedding completed. Saved to {st.session_state.index_path}")
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
