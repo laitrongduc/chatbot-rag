@@ -6,3 +6,4 @@ langchain-text-splitters==0.0.1
 langchainhub==0.1.15
 tiktoken
 sentence-transformers
+faiss-cpu
