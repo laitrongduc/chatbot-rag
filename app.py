@@ -233,63 +233,63 @@ def main():
         #     st.success(f"Uploaded {len(all_files)} files: {all_files}")
 
         # DOCUMENTS
-    st.title("Upload your documents")
-    if "doc_path" not in st.session_state:
-        st.session_state.doc_path = "data/"
-    if not os.path.exists(st.session_state.doc_path):
-        os.makedirs(st.session_state.doc_path)
-    # when the user uploads a file, store it in the session state
-    uploaded_files = st.file_uploader(
-        "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
-    )
-    if uploaded_files:
-        all_files = []
-        for file in uploaded_files:
-            file_type = file.name.split(".")[-1]
-            all_files.append(f"{file.name}")
-            file_path = os.path.join(st.session_state.doc_path, file.name)
-            # delete the old file if it exists
-            if os.path.exists(file_path):
-                os.remove(file_path)
-            # save the file to the data folder
-            with open(file_path, "wb") as f:
-                f.write(file.getvalue())
-        st.success(f"Uploaded {len(all_files)} files: {all_files}")
+        st.title("Upload your documents")
+        if "doc_path" not in st.session_state:
+            st.session_state.doc_path = "data/"
+        if not os.path.exists(st.session_state.doc_path):
+            os.makedirs(st.session_state.doc_path)
+        # when the user uploads a file, store it in the session state
+        uploaded_files = st.file_uploader(
+            "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
+        )
+        if uploaded_files:
+            all_files = []
+            for file in uploaded_files:
+                file_type = file.name.split(".")[-1]
+                all_files.append(f"{file.name}")
+                file_path = os.path.join(st.session_state.doc_path, file.name)
+                # delete the old file if it exists
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                # save the file to the data folder
+                with open(file_path, "wb") as f:
+                    f.write(file.getvalue())
+            st.success(f"Uploaded {len(all_files)} files: {all_files}")
 
-        # # EMBEDDING
-        # st.title("Embedding")
-        # doc_path = st.session_state.doc_path
-        # chunk_size = st.number_input(
-        #     "Chunk size", value=128, min_value=1, max_value=1000
-        # )
-        # chunk_step = st.number_input(
-        #     "Chunk step", value=128, min_value=1, max_value=1000
-        # )
-        # if "index_path" not in st.session_state:
-        #     st.session_state.index_path = "index/"
-        # index_path = st.session_state.index_path
-        # if not os.path.exists(index_path):
-        #     os.makedirs(index_path)
-        # if st.button("Embed"):
-        #     indexer(doc_path, chunk_size, chunk_step, index_path)
-        #     st.success(f"Embedding completed. Saved to {index_path}")
-        # EMBEDDING
-        st.title("Embedding")
-        doc_path = st.session_state.doc_path
-        chunk_size = st.number_input(
-            "Chunk size", value=128, min_value=1, max_value=1000
-        )
-        chunk_step = st.number_input(
-            "Chunk step", value=128, min_value=1, max_value=1000
-        )
-        if "index_path" not in st.session_state:
-            st.session_state.index_path = os.path.join(os.getcwd(), "index")
-        index_path = st.session_state.index_path
-        if not os.path.exists(index_path):
-            os.makedirs(index_path)
-        if st.button("Embed"):
-            indexer(doc_path, chunk_size, chunk_step, index_path)
-            st.success(f"Embedding completed. Saved to {index_path}")
+            # # EMBEDDING
+            # st.title("Embedding")
+            # doc_path = st.session_state.doc_path
+            # chunk_size = st.number_input(
+            #     "Chunk size", value=128, min_value=1, max_value=1000
+            # )
+            # chunk_step = st.number_input(
+            #     "Chunk step", value=128, min_value=1, max_value=1000
+            # )
+            # if "index_path" not in st.session_state:
+            #     st.session_state.index_path = "index/"
+            # index_path = st.session_state.index_path
+            # if not os.path.exists(index_path):
+            #     os.makedirs(index_path)
+            # if st.button("Embed"):
+            #     indexer(doc_path, chunk_size, chunk_step, index_path)
+            #     st.success(f"Embedding completed. Saved to {index_path}")
+            # EMBEDDING
+            st.title("Embedding")
+            doc_path = st.session_state.doc_path
+            chunk_size = st.number_input(
+                "Chunk size", value=128, min_value=1, max_value=1000
+            )
+            chunk_step = st.number_input(
+                "Chunk step", value=128, min_value=1, max_value=1000
+            )
+            if "index_path" not in st.session_state:
+                st.session_state.index_path = os.path.join(os.getcwd(), "index")
+            index_path = st.session_state.index_path
+            if not os.path.exists(index_path):
+                os.makedirs(index_path)
+            if st.button("Embed"):
+                indexer(doc_path, chunk_size, chunk_step, index_path)
+                st.success(f"Embedding completed. Saved to {index_path}")
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
