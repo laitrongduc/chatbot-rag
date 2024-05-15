@@ -221,8 +221,9 @@ def main():
             all_files = []
             for file in uploaded_files:
                 file_type = file.name.split(".")[-1]
+                # st.success(f"Uploaded {file.name} ({file_type})")
                 all_files.append(f"{file.name}")
-                file_path = os.path.join(st.session_state.doc_path, file.name)
+                file_path = st.session_state.doc_path + file.name
                 # delete the old file if it exists
                 if os.path.exists(file_path):
                     os.remove(file_path)
@@ -233,6 +234,7 @@ def main():
 
         # EMBEDDING
         st.title("Embedding")
+        doc_path = st.session_state.doc_path
         chunk_size = st.number_input(
             "Chunk size", value=128, min_value=1, max_value=1000
         )
@@ -241,16 +243,12 @@ def main():
         )
         if "index_path" not in st.session_state:
             st.session_state.index_path = "index/"
-        if not os.path.exists(st.session_state.index_pathex_path):
-            os.makedirs(st.session_state.index_path)
+        index_path = st.session_state.index_path
+        if not os.path.exists(index_path):
+            os.makedirs(index_path)
         if st.button("Embed"):
-            indexer(
-                st.session_state.doc_path,
-                chunk_size,
-                chunk_step,
-                st.session_state.index_path,
-            )
-            st.success(f"Embedding completed. Saved to {st.session_state.index_path}")
+            indexer(doc_path, chunk_size, chunk_step, index_path)
+            st.success(f"Embedding completed. Saved to {index_path}")
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
@@ -273,7 +271,7 @@ def main():
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            chat = Chat(st.session_state.index_path)
+            chat = Chat(index_path)
             response = chat(prompt)
             response = st.write_stream(response_generator(response))
         # Add assistant response to chat history
