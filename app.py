@@ -212,8 +212,8 @@ def main():
         if "doc_path" not in st.session_state:
             st.session_state.doc_path = "data/"
         doc_path = st.session_state.doc_path
-        # if not os.path.exists(st.session_state.doc_path):
-        #     os.makedirs(st.session_state.doc_path)
+        if not os.path.exists(doc_path):
+            os.makedirs(doc_path)
         # when the user uploads a file, store it in the session state
         uploaded_files = st.file_uploader(
             "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
@@ -237,8 +237,8 @@ def main():
         if "index_path" not in st.session_state:
             st.session_state.index_path = "index/"
         index_path = st.session_state.index_path
-        # if not os.path.exists(index_path):
-        #     os.makedirs(index_path)
+        if not os.path.exists(index_path):
+            os.makedirs(index_path)
         st.title("Embedding")
         chunk_size = st.number_input(
             "Chunk size", value=128, min_value=1, max_value=1000
