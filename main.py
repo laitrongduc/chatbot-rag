@@ -230,10 +230,13 @@ def main():
                 if not os.path.exists(doc_path):
                     os.makedirs(doc_path)
                 # writing the file from RAM to the .cache directory on disk
-                bytes_data = uploaded_file.read()
-                file_name = os.path.join(doc_path, uploaded_file.name)
-                with open(file_name, 'wb') as f:
-                    f.write(bytes_data)
+                # bytes_data = uploaded_file.read()
+                # file_name = os.path.join(doc_path, uploaded_file.name)
+                # with open(file_name, 'wb') as f:
+                #     f.write(bytes_data)
+                # save the file in the .cache directory
+                with open(os.path.join(doc_path, uploaded_file.name), "wb") as f:
+                    f.write(uploaded_file.read())
                 
                 # loading the document
                 indexer(".cache", chunk_size=64, chunk_step=64)
