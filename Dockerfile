@@ -23,5 +23,5 @@ ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.addres
 
 RUN mkdir .cache
 RUN chmod 777 .cache
-RUN mkdir index
-RUN chmod 777 index
+RUN mkdir .index
+RUN chmod 777 .index
