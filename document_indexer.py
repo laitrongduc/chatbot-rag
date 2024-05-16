@@ -268,4 +268,4 @@ def chunk_document(
                 texts.extend(chunks)
             except Exception as e:
                 print(f"Error encountered when reading {f}: {traceback.format_exc()} {e}")
-    return file_count, texts, metadata_list, chunk_id_to_index
+    return texts, metadata_list, chunk_id_to_index
