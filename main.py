@@ -24,8 +24,8 @@ from document_indexer import chunk_document
 
 
 def indexer(doc_path, chunk_size, chunk_step, index_path="index"):
-    if not os.path.exists(index_path):
-        os.makedirs(index_path)
+    # if not os.path.exists(index_path):
+    #     os.makedirs(index_path)
     
     texts, metadata_list, chunk_id_to_index = chunk_document(
         doc_path=doc_path,
