@@ -24,8 +24,8 @@ from document_indexer import chunk_document
 
 
 def indexer(doc_path, chunk_size, chunk_step, index_path=".index"):
-    # if not os.path.exists(index_path):
-    #     os.makedirs(index_path)
+    if not os.path.exists(index_path):
+        os.makedirs(index_path)
     
     texts, metadata_list, chunk_id_to_index = chunk_document(
         doc_path=doc_path,
@@ -226,15 +226,28 @@ def main():
         add_data = st.button('Add Data', on_click=clear_history)
         if uploaded_file and add_data: 
             with st.spinner("Reading, chunking and embedding file..."):
-                doc_path = ".cache"
+                # doc_path = ".cache"
                 # if not os.path.exists(doc_path):
                 #     os.makedirs(doc_path)
                 # writing the file from RAM to the .cache directory on disk
-                bytes_data = uploaded_file.read()
-                file_name = os.path.join(doc_path, uploaded_file.name)
-                with open(file_name, 'wb') as f:
-                    f.write(bytes_data)
-                
+                try:
+                    # Try to read as a text file
+                    content = uploaded_file.read().decode()
+                except:
+                    # If not a text file, read as binary
+                    content = uploaded_file.read()
+                # bytes_data = uploaded_file.read()
+                doc_path = ".cache/"
+                if not os.path.exists(doc_path):
+                    os.makedirs(doc_path)
+                # file_name = os.path.join(doc_path, uploaded_file.name)
+                # with open(file_name, 'wb') as f:
+                #     f.write(bytes_data)
+                # Create a file in the specified folder and write the content to it
+                file_path = os.path.join(doc_path, uploaded_file.name)
+                with open(file_path, "wb") as f:
+                    f.write(content)
+                            
                 # loading the document
                 indexer(doc_path, chunk_size=64, chunk_step=64)
                 
@@ -245,7 +258,7 @@ def main():
                 # vectorstore = create_embedding(chunks)
                 # saving the vector store in the streamlit session state (to be persistent between reruns) 
                 vectorstore = FAISS.load_local(
-                    folder_path="index",
+                    folder_path=".index",
                     embeddings=HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2"),
                     allow_dangerous_deserialization=True
                 )
