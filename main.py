@@ -23,7 +23,7 @@ except ImportError:
 from document_indexer import chunk_document
 
 
-def indexer(doc_path, chunk_size, chunk_step, index_path="index"):
+def indexer(doc_path, chunk_size, chunk_step, index_path=".index"):
     # if not os.path.exists(index_path):
     #     os.makedirs(index_path)
     
@@ -70,7 +70,7 @@ class Chatbot:
 
         with open(
             os.path.join(
-                "index",
+                ".index",
                 "chunk_id_to_index.pkl",
             ),
             "rb",
@@ -227,8 +227,8 @@ def main():
         if uploaded_file and add_data: 
             with st.spinner("Reading, chunking and embedding file..."):
                 doc_path = ".cache"
-                if not os.path.exists(doc_path):
-                    os.makedirs(doc_path)
+                # if not os.path.exists(doc_path):
+                #     os.makedirs(doc_path)
                 # writing the file from RAM to the .cache directory on disk
                 bytes_data = uploaded_file.read()
                 file_name = os.path.join(doc_path, uploaded_file.name)
@@ -236,10 +236,7 @@ def main():
                     f.write(bytes_data)
                 
                 # loading the document
-                index_path = "index"
-                if not os.path.exists(index_path):
-                    os.makedirs(index_path)
-                indexer(index_path, chunk_size=64, chunk_step=64)
+                indexer(doc_path, chunk_size=64, chunk_step=64)
                 
 
                 # data = load_document(file_name)
