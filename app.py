@@ -1,15 +1,13 @@
+import streamlit as st
 import os
+import time
+import random
+import re
 import pickle
 import json
 import traceback
-import time
-import streamlit as st
 
-from langchain.agents import initialize_agent, AgentType
-from langchain_community.callbacks.streamlit import StreamlitCallbackHandler
 from langchain_openai import ChatOpenAI
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.prompts import PromptTemplate
 
 try:
     import tiktoken
@@ -18,36 +16,51 @@ try:
 except ImportError:
     raise ImportError("Please install the dependencies first.")
 
-from document_indexer import chunk_document
+
+from ingest import create_vectorstore
+from constant import DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
+from utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
-def indexer(doc_path, chunk_size, chunk_step, index_path):
-    file_count, texts, metadata_list, chunk_id_to_index = chunk_document(
-        doc_path=doc_path,
-        chunk_size=chunk_size,
-        chunk_step=chunk_step,
-    )
-    if not texts:
-        raise ValueError("No texts to process.")
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    vectorstore = FAISS.from_texts(
-        texts=texts,
-        metadatas=metadata_list,
-        embedding=embeddings,
-    )
-    vectorstore.save_local(folder_path=index_path)
-    with open(os.path.join(index_path, "chunk_id_to_index.pkl"), "wb") as f:
-        pickle.dump(chunk_id_to_index, f)
+if not os.path.exists(DOC_PATH):
+    os.makedirs(DOC_PATH)
+
+if not os.path.exists(INDEX_PATH):
+    os.makedirs(INDEX_PATH)
+
+
+def is_valid_api_key(api_key: str) -> bool:
+    """Determine if input is valid OpenAI API key.
+
+    Args:
+        api_key (str): An input string to be validated.
+
+    Returns:
+        bool: A boolean that indicates if input is valid OpenAI API key.
+    """
+    api_key_re = re.compile(r"^sk-(proj-)?[A-Za-z0-9]{32,}$")
+    return bool(re.fullmatch(api_key_re, api_key))
+
+
+def response_generator(response):
+    # response = random.choice(
+    #     [
+    #         "Hello there! How can I assist you today?",
+    #         "Hi, human! Is there anything I can help you with?",
+    #         "Do you need help?",
+    #     ]
+    # )
+    response = response.replace("$", "\$")  # prevent rendering as LaTeX
+    for word in response.split():
+        yield word + " "
+        time.sleep(0.05)
 
 
 class Chat:
-    vectorstore = None
-
     def __init__(self, index_path):
         self.index_path = index_path
-        self._init()
-
-    def _init(self):
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.vectorstore = FAISS.load_local(
             folder_path=self.index_path,
@@ -76,9 +89,6 @@ class Chat:
 
         Helpful Answer:
         """
-        if self.vectorstore is None:
-            self._init()
-
         result = self.vectorstore.similarity_search(
             query=query,
             k=size,
@@ -180,77 +190,44 @@ class Chat:
         return expanded_chunks
 
 
-# Streamed response emulator
-def response_generator(response):
-    response = response.replace("$", "\$")  # prevent rendering as LaTeX
-    for word in response.split():
-        yield word + " "
-        time.sleep(0.05)
-
-
-def main():
+def show_ui():
     st.set_page_config(
         page_title="RAG Chatbot 🤖 - Chat with your documents",
         page_icon="🏂",
         layout="wide",
         initial_sidebar_state="expanded",
     )
+
     with st.sidebar:
-
-        # Reset the conversation
-        if st.button("🔴 Reset conversation"):
-            st.session_state["messages"] = []
-
-        st.title("Configuration")
-        # OPENAI_API_KEY
-        openai_api_key = st.text_input(
-            "OpenAI API Key", key="langchain_search_api_key_openai", type="password"
-        )
+        # clear chat history
+        if st.button("Clear chat history"):
+            st.session_state.messages = []
+        # configuration
+        st.markdown("## Configuration")
+        ## OPENAI API KEY
+        openai_api_key = st.text_input("OpenAI API Key", type="password")
         if openai_api_key:
-            os.environ["OPENAI_API_KEY"] = openai_api_key
-
-        # DOCUMENTS
-        st.title("Upload your documents")
-        if "doc_path" not in st.session_state:
-            st.session_state.doc_path = "data"
-        doc_path = st.session_state.doc_path
-        if not os.path.exists(doc_path):
-            os.makedirs(doc_path)
-        # when the user uploads a file, store it in the session state
-        uploaded_files = st.file_uploader(
-            "Choose a file...", type=["pdf", "docx", "pptx"], accept_multiple_files=True
+            if is_valid_api_key(openai_api_key):
+                st.success("Valid API key")
+                os.environ["OPENAI_API_KEY"] = openai_api_key
+            else:
+                st.error("Invalid API key")
+        ## DOCUMENT
+        uploaded_file = st.file_uploader(
+            "Upload your document", type=["pdf", "docx", "txt"]
         )
-        if uploaded_files:
-            all_files = []
-            for file in uploaded_files:
-                file_type = file.name.split(".")[-1]
-                # st.success(f"Uploaded {file.name} ({file_type})")
-                all_files.append(f"{file.name}")
-                file_path = os.path.join(doc_path, file.name)
-                # delete the old file if it exists
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                # save the file to the data folder
+        add_data = st.button("Add data")
+        if add_data and uploaded_file:
+            with st.spinner("Reading, chunking, and embedding file ...."):
+                file_path = os.path.join(DOC_PATH, uploaded_file.name)
                 with open(file_path, "wb") as f:
-                    f.write(file.getbuffer())
-            st.success(f"Uploaded {len(all_files)} files: {all_files}")
-
-        # EMBEDDING
-        if "index_path" not in st.session_state:
-            st.session_state.index_path = "index"
-        index_path = st.session_state.index_path
-        if not os.path.exists(index_path):
-            os.makedirs(index_path)
-        st.title("Embedding")
-        chunk_size = st.number_input(
-            "Chunk size", value=128, min_value=1, max_value=1000
-        )
-        chunk_step = st.number_input(
-            "Chunk step", value=128, min_value=1, max_value=1000
-        )
-        if st.button("Embed"):
-            indexer(doc_path, chunk_size, chunk_step, index_path)
-            st.success(f"Embedding completed. Saved to {index_path}")
+                    f.write(uploaded_file.read())
+                logger.info(f"Document uploaded: {uploaded_file.name}")
+                vectorstore = create_vectorstore(
+                    DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
+                )
+                st.session_state.vs = vectorstore
+                st.success("File uploaded, chunked and embedded successfully.")
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
@@ -267,17 +244,22 @@ def main():
     if prompt := st.chat_input("Ask me anything..."):
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
+
         # Display user message in chat message container
         with st.chat_message("user"):
             st.write(prompt)
-
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            chat = Chat(index_path)
+            # response = st.write_stream(response_generator())
+            chat = Chat(INDEX_PATH)
             response = chat(prompt)
             response = st.write_stream(response_generator(response))
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+
+def main():
+    show_ui()
 
 
 if __name__ == "__main__":

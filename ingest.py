@@ -1,6 +1,9 @@
-import os
-import re
+import argparse
+import csv
 import json
+import os
+import pickle
+import re
 import traceback
 from typing import Dict, List, Literal, Tuple
 
@@ -10,6 +13,10 @@ try:
     from langchain_community.vectorstores import FAISS
 except ImportError:
     raise ImportError("Please install the dependencies first.")
+
+from utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 def chunk_str_overlap(
@@ -37,7 +44,7 @@ def chunk_str_overlap(
 
     if len(lines) == 0:
         return []
-    
+
     first_line = lines[0]
     first_line_size = len(encoding.encode(first_line))
 
@@ -76,8 +83,8 @@ def chunk_str_overlap(
 
 
 def get_title(
-        file_name: str,
-        prop="title: ",
+    file_name: str,
+    prop="title: ",
 ) -> str:
     """
     Get the title of a file
@@ -119,7 +126,6 @@ def extract_text_from_file(
         extracted_text = docx2txt.process(file)
         title = extracted_text.split("\n")[0]
     elif file_type == "csv":
-        import csv
         # Extract text from csv using csv module
         extracted_text = ""
         title = ""
@@ -148,8 +154,8 @@ def extract_text_from_file(
     else:
         # Unsupported file type
         raise ValueError(f"Unsupported file type: {file_type}")
-    
-    return title, extracted_text
+
+    return title[:100], extracted_text
 
 
 def text_parser(
@@ -205,7 +211,7 @@ def text_parser(
             f"The supported extensions are {supported_extensions}",
         )
         return title, ""
-    
+
     output_text = re.sub(r"\n{3,}", "\n\n", text)
     # keep whitespaces for formatting
     output_text = re.sub(r"-{3,}", "---", output_text)
@@ -234,11 +240,11 @@ def chunk_document(
     enc = tiktoken.encoding_for_model("gpt-3.5-turbo")
 
     # traverse all files under dir
-    print("Split documents into chunks...")
+    logger.info("Split documents into chunks...")
     for root, dirs, files in os.walk(doc_path):
         for name in files:
             f = os.path.join(root, name)
-            print(f"Reading {f}")
+            logger.info(f"Reading {f}")
             try:
                 title, content = text_parser(f)
                 file_count += 1
@@ -268,4 +274,35 @@ def chunk_document(
                 texts.extend(chunks)
             except Exception as e:
                 print(f"Error encountered when reading {f}: {traceback.format_exc()} {e}")
-    return texts, metadata_list, chunk_id_to_index
+    return file_count, texts, metadata_list, chunk_id_to_index
+
+
+
+def create_vectorstore(doc_path, chunk_size, chunk_step, index_path):
+    file_count, texts, metadata_list, chunk_id_to_index = chunk_document(
+        doc_path=doc_path,
+        chunk_size=chunk_size,
+        chunk_step=chunk_step,
+    )
+    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    vectorstore = FAISS.from_texts(
+        texts=texts,
+        metadatas=metadata_list,
+        embedding=embeddings,
+    )
+    vectorstore.save_local(folder_path=index_path)
+    with open(os.path.join(index_path, "chunk_id_to_index.pkl"), "wb") as f:
+        pickle.dump(chunk_id_to_index, f)
+
+    logger.info(f"Saved vectorstore to {index_path}")
+
+
+
+if __name__ == "__main__":
+    DOC_PATH = "data/"
+    INDEX_PATH = "vectorstore/"
+    CHUNK_SIZE = 128
+    CHUNK_STEP = 64
+
+    create_vectorstore(DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH)
+

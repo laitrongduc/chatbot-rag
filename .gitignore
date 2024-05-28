@@ -1,6 +1,5 @@
-.env
 __pycache__
 data
-index
-app.py
-.cache
+vectorstore
+.env
+.gitignore
