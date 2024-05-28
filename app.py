@@ -26,7 +26,6 @@ logger = get_logger(__name__)
 
 if not os.path.exists(DOC_PATH):
     os.makedirs(DOC_PATH)
-
 if not os.path.exists(INDEX_PATH):
     os.makedirs(INDEX_PATH)
 
@@ -45,13 +44,6 @@ def is_valid_api_key(api_key: str) -> bool:
 
 
 def response_generator(response):
-    # response = random.choice(
-    #     [
-    #         "Hello there! How can I assist you today?",
-    #         "Hi, human! Is there anything I can help you with?",
-    #         "Do you need help?",
-    #     ]
-    # )
     response = response.replace("$", "\$")  # prevent rendering as LaTeX
     for word in response.split():
         yield word + " "
@@ -228,6 +220,7 @@ def show_ui():
                 )
                 st.session_state.vs = vectorstore
                 st.success("File uploaded, chunked and embedded successfully.")
+                logger.info("File uploaded, chunked and embedded successfully.")
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
