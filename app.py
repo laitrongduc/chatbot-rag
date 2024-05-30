@@ -18,7 +18,7 @@ except ImportError:
 
 
 from ingest import create_vectorstore
-from constant import DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
+from constants import DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
