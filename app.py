@@ -1,12 +1,11 @@
-import streamlit as st
 import os
 import time
-import random
 import re
 import pickle
 import json
 import traceback
 
+import streamlit as st
 from langchain_openai import ChatOpenAI
 
 try:
@@ -16,13 +15,11 @@ try:
 except ImportError:
     raise ImportError("Please install the dependencies first.")
 
-
 from ingest import create_vectorstore
 from constants import DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
-
 
 if not os.path.exists(DOC_PATH):
     os.makedirs(DOC_PATH)
@@ -31,14 +28,6 @@ if not os.path.exists(INDEX_PATH):
 
 
 def is_valid_api_key(api_key: str) -> bool:
-    """Determine if input is valid OpenAI API key.
-
-    Args:
-        api_key (str): An input string to be validated.
-
-    Returns:
-        bool: A boolean that indicates if input is valid OpenAI API key.
-    """
     api_key_re = re.compile(r"^sk-(proj-)?[A-Za-z0-9]{32,}$")
     return bool(re.fullmatch(api_key_re, api_key))
 
@@ -106,7 +95,6 @@ class Chat:
             return f"An error occurred: {e}"
 
     def wrap_text_with_delimiter_temporal(self, text: str) -> str:
-        """wrap text with delimiter"""
         from prompt_util import PromptUtil
 
         return PromptUtil.wrap_text_with_delimiter(
@@ -116,7 +104,6 @@ class Chat:
 
     def do_expand(self, result, target_length):
         expanded_chunks = []
-        # do expansion
         for r in result:
             source = r.metadata["source"]
             chunk_id = r.metadata["chunk_id"]
@@ -175,8 +162,6 @@ class Chat:
                 {
                     "chunk": expanded_result,
                     "metadata": r.metadata,
-                    # "length": current_length,
-                    # "chunk_ids": chunk_ids
                 },
             )
         return expanded_chunks
@@ -191,12 +176,9 @@ def show_ui():
     )
 
     with st.sidebar:
-        # clear chat history
         if st.button("Clear chat history"):
             st.session_state.messages = []
-        # configuration
         st.markdown("## Configuration")
-        ## OPENAI API KEY
         openai_api_key = st.text_input("OpenAI API Key", type="password")
         if openai_api_key:
             if is_valid_api_key(openai_api_key):
@@ -204,7 +186,6 @@ def show_ui():
                 os.environ["OPENAI_API_KEY"] = openai_api_key
             else:
                 st.error("Invalid API key")
-        ## DOCUMENT
         uploaded_file = st.file_uploader(
             "Upload your document", type=["pdf", "docx", "txt"]
         )
@@ -213,7 +194,7 @@ def show_ui():
             with st.spinner("Reading, chunking, and embedding file ...."):
                 file_path = os.path.join(DOC_PATH, uploaded_file.name)
                 with open(file_path, "wb") as f:
-                    f.write(uploaded_file.read())
+                    f.write(uploaded_file.getvalue())
                 logger.info(f"Document uploaded: {uploaded_file.name}")
                 vectorstore = create_vectorstore(
                     DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
@@ -224,30 +205,22 @@ def show_ui():
 
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
-    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # Display chat messages from history on app rerun
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    # Accept user input
     if prompt := st.chat_input("Ask me anything..."):
-        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        # Display user message in chat message container
         with st.chat_message("user"):
             st.write(prompt)
-        # Display assistant response in chat message container
         with st.chat_message("assistant"):
-            # response = st.write_stream(response_generator())
             chat = Chat(INDEX_PATH)
             response = chat(prompt)
             response = st.write_stream(response_generator(response))
-        # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
 
 

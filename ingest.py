@@ -295,14 +295,3 @@ def create_vectorstore(doc_path, chunk_size, chunk_step, index_path):
         pickle.dump(chunk_id_to_index, f)
 
     logger.info(f"Saved vectorstore to {index_path}")
-
-
-
-if __name__ == "__main__":
-    DOC_PATH = "data/"
-    INDEX_PATH = "vectorstore/"
-    CHUNK_SIZE = 128
-    CHUNK_STEP = 64
-
-    create_vectorstore(DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH)
-
