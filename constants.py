@@ -1,7 +1,7 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DOC_PATH = os.path.join(BASE_DIR, ".pdfs")
-INDEX_PATH = os.path.join(BASE_DIR, ".index")
-CHUNK_SIZE = 128
-CHUNK_STEP = 128
+DATA_DIR = os.path.join(BASE_DIR, "data")
+INDEX_DIR = os.path.join(BASE_DIR, "index")
+CHUNK_SIZE = 64
+CHUNK_STEP = 64
