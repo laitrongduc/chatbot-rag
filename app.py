@@ -16,15 +16,15 @@ except ImportError:
     raise ImportError("Please install the dependencies first.")
 
 from ingest import create_vectorstore
-from constants import DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
+from constants import DATA_DIR, CHUNK_SIZE, CHUNK_STEP, INDEX_DIR
 from utils.logging import get_logger
 
 logger = get_logger(__name__)
 
-if not os.path.exists(DOC_PATH):
-    os.makedirs(DOC_PATH)
-if not os.path.exists(INDEX_PATH):
-    os.makedirs(INDEX_PATH)
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+if not os.path.exists(INDEX_DIR):
+    os.makedirs(INDEX_DIR)
 
 
 def is_valid_api_key(api_key: str) -> bool:
@@ -192,12 +192,12 @@ def show_ui():
         add_data = st.button("Add data")
         if add_data and uploaded_file:
             with st.spinner("Reading, chunking, and embedding file ...."):
-                file_path = os.path.join(DOC_PATH, uploaded_file.name)
+                file_path = os.path.join(DATA_DIR, uploaded_file.name)
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getvalue())
                 logger.info(f"Document uploaded: {uploaded_file.name}")
                 vectorstore = create_vectorstore(
-                    DOC_PATH, CHUNK_SIZE, CHUNK_STEP, INDEX_PATH
+                    DATA_DIR, CHUNK_SIZE, CHUNK_STEP, INDEX_DIR
                 )
                 st.session_state.vs = vectorstore
                 st.success("File uploaded, chunked and embedded successfully.")
@@ -206,7 +206,9 @@ def show_ui():
     st.title("RAG Chatbot 🤖 - Chat with your documents")
 
     if "messages" not in st.session_state:
-        st.session_state.messages = []
+        st.session_state.messages = [
+            {"role": "assistant", "content": "Hello! How can I help you today?"}
+        ]
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
@@ -218,7 +220,7 @@ def show_ui():
         with st.chat_message("user"):
             st.write(prompt)
         with st.chat_message("assistant"):
-            chat = Chat(INDEX_PATH)
+            chat = Chat(INDEX_DIR)
             response = chat(prompt)
             response = st.write_stream(response_generator(response))
         st.session_state.messages.append({"role": "assistant", "content": response})
